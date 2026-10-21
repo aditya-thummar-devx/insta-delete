@@ -7,6 +7,7 @@ final class ReviewSession {
     let queue: [MediaItem]
     let scopeLabel: String
     private(set) var index: Int
+    let video = VideoController()
 
     init(queue: [MediaItem], index: Int, scopeLabel: String) {
         self.queue = queue

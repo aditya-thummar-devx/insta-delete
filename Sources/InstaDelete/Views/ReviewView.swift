@@ -12,7 +12,7 @@ struct ReviewView: View {
                 HStack(spacing: 20) {
                     NavCircle(symbol: "chevron.left", label: "Previous") { session.previous() }
                     if let item = session.current {
-                        Viewer(item: item, marked: store.isMarked(item))
+                        Viewer(item: item, marked: store.isMarked(item), video: session.video)
                     } else {
                         Spacer()
                     }
@@ -35,6 +35,9 @@ struct ReviewView: View {
         .focusEffectDisabled()
         .onAppear { focused = true }
         .onKeyPress(phases: .down) { press in handle(press) }
+        // Moving to another item (or leaving) stops any playing video.
+        .onChange(of: session.index, initial: true) { session.video.load(session.current) }
+        .onDisappear { session.video.load(nil) }
         .task(id: session.index) { await prefetchNeighbours() }
     }
 
@@ -48,6 +51,9 @@ struct ReviewView: View {
         case .rightArrow: next()
         case .delete, .deleteForward: if let item = session.current { store.toggleMark(item) }
         case .escape: store.exitReview()
+        case .space:
+            guard session.current?.isVideo == true else { return .ignored }
+            session.video.toggle()
         default: return .ignored
         }
         return .handled
@@ -133,13 +139,13 @@ private struct NavCircle: View {
 private struct Viewer: View {
     let item: MediaItem
     let marked: Bool
+    let video: VideoController
 
     var body: some View {
         ZStack {
             Color.black
             if item.isVideo {
-                // M6: AVKit player
-                Image(systemName: "play.rectangle").font(.system(size: 48)).foregroundStyle(.white.opacity(0.4))
+                VideoPlayerView(video: video)
             } else {
                 ReviewImage(url: item.id)
             }
@@ -159,6 +165,7 @@ private struct Viewer: View {
                     }
                     .foregroundStyle(.white)
                 }
+                .allowsHitTesting(false)  // keep the video controls usable while marked
                 .accessibilityElement(children: .combine)
             }
         }
@@ -353,8 +360,11 @@ private struct FilmCell: View {
                 .overlay { ThumbnailImage(url: item.id) }
                 .overlay(alignment: .bottomLeading) {
                     if item.isVideo {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 7))
+                        HStack(spacing: 3) {
+                            Image(systemName: "play.fill").font(.system(size: 7))
+                            VideoDuration(url: item.id, item: item)
+                        }
+                            .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 4)
                             .frame(height: 16)
