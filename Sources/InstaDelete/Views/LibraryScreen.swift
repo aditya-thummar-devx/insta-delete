@@ -114,13 +114,9 @@ private struct FilterBar: View {
                 }
                 .pickerStyle(.inline)
             } label: {
-                Label {
-                    Text("Sort: ").foregroundStyle(Theme.textSecondary)
-                        + Text(store.sortKey.rawValue).fontWeight(.semibold)
-                        + Text(store.sortAscending ? " ↑" : " ↓").foregroundStyle(Theme.textSecondary)
-                } icon: {
-                    Image(systemName: "arrow.up.arrow.down")
-                }
+                Text("Sort: ").foregroundStyle(Theme.textSecondary)
+                    + Text(store.sortKey.rawValue).fontWeight(.semibold)
+                    + Text(store.sortAscending ? " ↑" : " ↓").foregroundStyle(Theme.textSecondary)
             }
             .fixedSize()
             .accessibilityLabel("Sort: \(store.sortKey.rawValue), \(store.sortAscending ? store.sortKey.orderLabels.asc : store.sortKey.orderLabels.desc)")
