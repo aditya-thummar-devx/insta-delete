@@ -30,6 +30,12 @@ struct LibraryScreen: View {
             }
         }
         .sheet(isPresented: $store.confirmingMove) { ConfirmSheet() }
+        .alert("Folder not added", isPresented: Binding(
+            get: { store.scanNotice != nil }, set: { if !$0 { store.scanNotice = nil } })) {
+            Button("OK") { store.scanNotice = nil }
+        } message: {
+            Text(store.scanNotice ?? "")
+        }
         .alert("Some items weren’t moved", isPresented: Binding(
             get: { store.moveError != nil }, set: { if !$0 { store.moveError = nil } })) {
             Button("OK") { store.moveError = nil }
@@ -197,6 +203,19 @@ struct SidebarView: View {
                     }
                     .buttonStyle(.plain)
                     .listRowBackground(store.libraryView == .bin ? Theme.sidebarSelected : Color.clear)
+                }
+                Section("Scan Folders") {
+                    ForEach(store.roots, id: \.self) { root in
+                        Label(root.lastPathComponent, systemImage: "folder.badge.gearshape")
+                            .help(root.path)
+                            .contextMenu {
+                                Button("Stop Scanning This Folder", role: .destructive) { store.removeFolder(root) }
+                            }
+                    }
+                    Button { store.addFolder() } label: { Label("Add Folder…", systemImage: "plus") }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Theme.accent)
+                        .disabled(store.isMoving)
                 }
             }
             .listStyle(.sidebar)

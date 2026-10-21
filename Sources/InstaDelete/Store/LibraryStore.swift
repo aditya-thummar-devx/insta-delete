@@ -17,7 +17,9 @@ final class LibraryStore {
     private(set) var items: [MediaItem] = []
     /// Items in the current folder (+ filter/sort from M4). Grid and review queue both read this.
     private(set) var scope: [MediaItem] = []
-    private(set) var root: URL?
+    private(set) var roots: [URL] = []
+    /// Set when Add Folder is refused (e.g. the pick is already inside a scanned folder); the library screen shows it.
+    var scanNotice: String?
     /// Items per sidebar folder, and per type within the selected folder (for the segmented control).
     private(set) var folderCounts: [Folder: Int] = [:]
     private(set) var typeCounts: [TypeFilter: Int] = [:]
@@ -56,6 +58,8 @@ final class LibraryStore {
     @ObservationIgnored private var bootstrapped = false
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var lastRecompute = Date.distantPast
+    /// Ids already in `items`, so overlapping scans never list a file twice.
+    @ObservationIgnored private var itemIDs: Set<URL> = []
 
     init(marks: MarkedStore = MarkedStore(), moveFlow: MoveFlow = MoveFlow()) {
         self.marks = marks
@@ -66,15 +70,64 @@ final class LibraryStore {
     func bootstrap() {
         guard !bootstrapped else { return }
         bootstrapped = true
-        if let url = access.restore() { adopt(root: url) }
+        let restored = access.restore()
+        if !restored.isEmpty { adopt(roots: restored) }
     }
 
     func grantAccess(home: Bool) {
-        if let url = access.requestAccess(home: home) { adopt(root: url) }
+        if let url = access.requestAccess(home: home) { adopt(roots: [url]) }
     }
 
-    private func adopt(root url: URL) {
-        root = url
+    /// Add another scan folder: scanned in place, existing items and marks stay.
+    func addFolder() {
+        guard !isMoving else { return }
+        switch access.addRoot() {
+        case .cancelled:
+            break
+        case .alreadyCovered(let parent):
+            scanNotice = "That folder is already inside “\(parent.lastPathComponent)”, which is being scanned."
+        case .added(let url, let replaced):
+            roots = access.roots
+            // Items under replaced roots carry paths relative to the old root; drop and rescan them under the new one.
+            if !replaced.isEmpty { dropItems { item in replaced.contains { under($0, item) } } }
+            // A running scan is cancelled by `scan`, so restart it over every root (dedupe skips what's already listed).
+            scan(isScanning || !replaced.isEmpty ? roots : [url])
+        }
+    }
+
+    /// Stop scanning `url`: drop its items and its marks.
+    func removeFolder(_ url: URL) {
+        guard !isMoving else { return }
+        access.removeRoot(url)
+        roots = access.roots
+        for id in marks.ids where under(url, id) { marks.remove(id) }
+        dropItems { under(url, $0) }
+        if roots.isEmpty {
+            scanTask?.cancel()
+            isScanning = false
+            phase = .access
+        } else if isScanning {
+            scan(roots)
+        }
+    }
+
+    private func under(_ root: URL, _ id: URL) -> Bool {
+        let p = root.path
+        return id.path.hasPrefix(p.hasSuffix("/") ? p : p + "/")
+    }
+
+    private func under(_ root: URL, _ item: MediaItem) -> Bool { under(root, item.id) }
+
+    private func dropItems(where shouldDrop: (MediaItem) -> Bool) {
+        items.removeAll(where: shouldDrop)
+        itemIDs = Set(items.map(\.id))
+        imageCount = items.filter { !$0.isVideo }.count
+        videoCount = items.count - imageCount
+        recomputeScope()
+    }
+
+    private func adopt(roots newRoots: [URL]) {
+        roots = newRoots
         selectedFolder = .all
         libraryView = .all
         startScan()
@@ -90,21 +143,31 @@ final class LibraryStore {
         return min(1, (Double(done) + active) / Double(order.count))
     }
 
+    /// Full rescan of every root from an empty library.
     func startScan() {
-        guard let root else { return }
+        guard !roots.isEmpty else { return }
         lastMove = []
         scanTask?.cancel()
         items = []
+        itemIDs = []
         recomputeScope()
         imageCount = 0
         videoCount = 0
+        phase = .scanning
+        scan(roots)
+    }
+
+    /// Scan `targets` one after another, appending to `items`.
+    private func scan(_ targets: [URL]) {
+        scanTask?.cancel()
         currentPath = ""
         folderStatus = Dictionary(uniqueKeysWithValues: Scanner.folderOrder.map { ($0, FolderScanState.waiting) })
         isScanning = true
-        phase = .scanning
         scanTask = Task { [weak self] in
-            for await event in Scanner.stream(root: root) { self?.handle(event) }
-            guard !Task.isCancelled else { return }
+            for root in targets {
+                for await event in Scanner.stream(root: root) { self?.handle(event) }
+                if Task.isCancelled { return }
+            }
             self?.finishScan()
         }
     }
@@ -114,6 +177,7 @@ final class LibraryStore {
         scanTask?.cancel()
         isScanning = false
         items = []
+        itemIDs = []
         recomputeScope()
         phase = .access
     }
@@ -123,9 +187,11 @@ final class LibraryStore {
 
     private func handle(_ event: ScanEvent) {
         switch event {
-        case .folderStarted(let f): folderStatus[f] = .scanning
+        // ponytail: progress is per run, not per root; a later root must not flip finished rows back.
+        case .folderStarted(let f): if folderStatus[f] != .done { folderStatus[f] = .scanning }
         case .folderDone(let f): folderStatus[f] = .done; recomputeScope()
-        case .found(let batch, let path):
+        case .found(let all, let path):
+            let batch = all.filter { itemIDs.insert($0.id).inserted }
             items.append(contentsOf: batch)
             for i in batch { if i.isVideo { videoCount += 1 } else { imageCount += 1 } }
             if !path.isEmpty { currentPath = path }
