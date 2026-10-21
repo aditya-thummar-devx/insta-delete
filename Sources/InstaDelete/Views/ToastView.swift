@@ -21,7 +21,7 @@ struct ToastView: View {
                 .font(.system(size: 13, weight: .medium))
                 .padding(.horizontal, 12)
                 .frame(height: 32)
-                .background(Color(hex: 0x2E2E33), in: RoundedRectangle(cornerRadius: 7))
+                .background(Color(light: 0x2E2E33, dark: 0x3A3A3E), in: RoundedRectangle(cornerRadius: 7))
             Button { store.dismissToast() } label: {
                 Image(systemName: "xmark").font(.system(size: 12, weight: .semibold)).frame(width: 32, height: 32)
             }
@@ -33,7 +33,7 @@ struct ToastView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: 620)
-        .background(Color(hex: 0x1D1D1F), in: RoundedRectangle(cornerRadius: 14))
+        .background(Color(light: 0x1D1D1F, dark: 0x2C2C2E), in: RoundedRectangle(cornerRadius: 14))
         .shadow(color: .black.opacity(0.3), radius: 20, y: 16)
         .padding(.horizontal, 20)
         .accessibilityElement(children: .contain)

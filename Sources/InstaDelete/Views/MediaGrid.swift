@@ -29,11 +29,11 @@ struct MediaTile: View {
     let marked: Bool
 
     var body: some View {
-        Color(hex: 0xE5E5EA)
+        Theme.tilePlaceholder
             .aspectRatio(1, contentMode: .fit)
             .overlay { ThumbnailImage(url: item.id) }
             .overlay(alignment: .bottom) { caption }
-            .overlay { if marked { Color.white.opacity(0.5) } }
+            .overlay { if marked { Theme.windowBG.opacity(0.5) } }
             .overlay(alignment: .topLeading) {
                 if item.isVideo {
                     Text("VIDEO")

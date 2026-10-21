@@ -29,8 +29,8 @@ struct AccessView: View {
                            text: "Moving to the Bin needs a confirmation and Touch ID or your Mac password.")
             }
             .padding(20)
-            .background(Color(hex: 0xFAFAFC), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: 0xE5E5EA)))
+            .background(Theme.cardBG, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder))
 
             VStack(spacing: 6) {
                 Button { store.grantAccess(home: true) } label: {
@@ -57,7 +57,7 @@ struct AccessView: View {
         .frame(width: 580)
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white)
+        .background(Theme.windowBG)
         .foregroundStyle(Theme.text)
     }
 }
@@ -73,7 +73,7 @@ private struct PromiseRow: View {
                 .font(.system(size: 17))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 36, height: 36)
-                .background(Color(hex: 0xE6EFFA), in: RoundedRectangle(cornerRadius: 8))
+                .background(Theme.accentSoftBG, in: RoundedRectangle(cornerRadius: 8))
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.system(size: 14, weight: .semibold))
                 Text(text).font(.system(size: 13)).foregroundStyle(Theme.textSecondary)

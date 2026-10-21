@@ -19,27 +19,28 @@ struct ReviewCompleteView: View {
                     .font(.system(size: 30, weight: .bold))
                 Text("\(store.review?.scopeLabel ?? "") · \(Format.mix(queue)). Nothing has been moved yet — check your list before anything goes to the Bin.")
                     .font(.system(size: 15))
-                    .foregroundStyle(Color(hex: 0xA1A1A6))
+                    .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
             }
 
             HStack(spacing: 12) {
                 StatCard(title: "To be binned", value: store.markedItems.count,
                          caption: Format.size(store.markedBytes),
-                         titleColor: Color(hex: 0xFFB4B0), border: Color(hex: 0x3A1A1E))
+                         titleColor: Theme.destructiveSoftFG, border: Theme.reviewMarkRing.opacity(0.35))
                 StatCard(title: "Kept", value: queue.count - markedInQueue,
                          caption: "Stay exactly where they are",
-                         titleColor: Color(hex: 0xA1A1A6), border: Color(hex: 0x2A2A2E))
+                         titleColor: Theme.textSecondary, border: Theme.reviewDivider)
             }
 
             HStack(spacing: 12) {
                 Button { store.exitReview() } label: {
                     Text("Back to Gallery").font(.system(size: 14, weight: .medium)).padding(.horizontal, 20).frame(height: 44)
-                        .background(Color(hex: 0x2A2A2E), in: RoundedRectangle(cornerRadius: 10))
+                        .background(Theme.reviewChip, in: RoundedRectangle(cornerRadius: 10))
                 }
                 Button { store.openBin() } label: {
                     Text("Check To Be Binned (\(store.markedItems.count))")
                         .font(.system(size: 14, weight: .semibold)).padding(.horizontal, 22).frame(height: 44)
+                        .foregroundStyle(.white)
                         .background(Theme.accent, in: RoundedRectangle(cornerRadius: 10))
                 }
             }
@@ -49,8 +50,7 @@ struct ReviewCompleteView: View {
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.reviewBG)
-        .foregroundStyle(Color(hex: 0xF5F5F7))
-        .preferredColorScheme(.dark)
+        .foregroundStyle(Theme.text)
     }
 }
 
@@ -65,11 +65,11 @@ private struct StatCard: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(titleColor)
             Text("\(value)").font(.system(size: 32, weight: .bold).monospacedDigit())
-            Text(caption).font(.system(size: 13)).foregroundStyle(Color(hex: 0xA1A1A6))
+            Text(caption).font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: 0x1F1F23), in: RoundedRectangle(cornerRadius: 12))
+        .background(Theme.reviewPanel, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(border))
         .accessibilityElement(children: .combine)
     }
