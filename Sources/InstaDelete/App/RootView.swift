@@ -10,9 +10,12 @@ struct RootView: View {
                 AccessView()
             case .scanning:
                 ScanningView()
-            case .library, .review, .complete:
-                // Later milestones route to dedicated screens.
+            case .library:
                 LibraryScreen()
+            case .review:
+                if let session = store.review { ReviewView(session: session) }
+            case .complete:
+                ReviewCompleteView()
             }
         }
         .task { store.bootstrap() }

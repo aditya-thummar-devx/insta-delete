@@ -22,6 +22,15 @@ final class LibraryStore {
     private(set) var folderCounts: [Folder: Int] = [:]
     private(set) var typeCounts: [TypeFilter: Int] = [:]
 
+    // Marks ("To Be Binned")
+    private(set) var markedIDs: Set<URL> = []
+    /// Marked items that exist in the current scan, in scope order of `items`.
+    private(set) var markedItems: [MediaItem] = []
+    var markedBytes: Int64 { markedItems.reduce(0) { $0 + $1.size } }
+
+    // Review
+    private(set) var review: ReviewSession?
+
     // Scan state
     private(set) var isScanning = false
     private(set) var folderStatus: [Folder: FolderScanState] = [:]
@@ -30,9 +39,14 @@ final class LibraryStore {
     private(set) var videoCount = 0
 
     @ObservationIgnored private let access = AccessManager()
+    @ObservationIgnored private let marks: MarkedStore
     @ObservationIgnored private var bootstrapped = false
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var lastRecompute = Date.distantPast
+
+    init(marks: MarkedStore = MarkedStore()) {
+        self.marks = marks
+    }
 
     /// Called once at launch: skip the Access screen if the stored bookmark is still valid.
     func bootstrap() {
@@ -108,8 +122,61 @@ final class LibraryStore {
     private func finishScan() {
         isScanning = false
         currentPath = ""
+        marks.reconcile(with: items)
         recomputeScope()
         if phase == .scanning { phase = .library }
+    }
+
+    // MARK: Marks
+
+    func isMarked(_ item: MediaItem) -> Bool { markedIDs.contains(item.id) }
+
+    func toggleMark(_ item: MediaItem) {
+        if isMarked(item) { marks.remove(item.id) } else { marks.add(item) }
+        refreshMarked()
+    }
+
+    func unmark(_ item: MediaItem) {
+        marks.remove(item.id)
+        refreshMarked()
+    }
+
+    func unmarkAll() {
+        marks.removeAll()
+        refreshMarked()
+    }
+
+    private func refreshMarked() {
+        markedItems = items.filter { marks.contains($0.id) }
+        markedIDs = Set(markedItems.map(\.id))
+    }
+
+    // MARK: Review
+
+    var scopeLabel: String {
+        let typeWord = switch typeFilter { case .all: "All media"; case .images: "Images"; case .videos: "Videos" }
+        let place = selectedFolder == .all ? "" : " in \(selectedFolder.rawValue)"
+        return "\(typeWord)\(place) · \(sortKey.rawValue) \(sortAscending ? "↑" : "↓")"
+    }
+
+    func startReview(at index: Int = 0) {
+        guard !scope.isEmpty else { return }
+        review = ReviewSession(queue: scope, index: index, scopeLabel: scopeLabel)
+        phase = .review
+    }
+
+    func exitReview() {
+        review = nil
+        libraryView = .all
+        phase = .library
+    }
+
+    func finishReview() { phase = .complete }
+
+    func openBin() {
+        libraryView = .bin
+        review = nil
+        phase = .library
     }
 
     // MARK: Sort / filter
@@ -133,6 +200,7 @@ final class LibraryStore {
         typeCounts = [.all: inFolder.count, .images: inFolder.count - videos, .videos: videos]
 
         scope = MediaQuery.sort(inFolder.filter(typeFilter.matches), key: sortKey, ascending: sortAscending)
+        refreshMarked()
     }
 
     func count(in folder: Folder) -> Int { folderCounts[folder] ?? 0 }

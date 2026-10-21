@@ -10,30 +10,55 @@ struct LibraryScreen: View {
         } detail: {
             VStack(spacing: 0) {
                 if store.isScanning { ScanBanner() }
-                FilterBar()
-                if store.scope.isEmpty {
-                    EmptyState(scanning: store.isScanning)
+                if store.libraryView == .bin {
+                    BinListView()
                 } else {
-                    MediaGrid(items: store.scope)
+                    FilterBar()
+                    if store.scope.isEmpty {
+                        EmptyState(scanning: store.isScanning)
+                    } else {
+                        MediaGrid(items: store.scope)
+                    }
                 }
             }
-            .navigationTitle(store.selectedFolder.rawValue)
+            .navigationTitle(store.libraryView == .bin ? "To Be Binned" : store.selectedFolder.rawValue)
             .navigationSubtitle(summary)
-            .toolbar {
-                ToolbarItem {
-                    Button { store.startScan() } label: { Image(systemName: "arrow.clockwise") }
-                        .help("Rescan")
-                        .accessibilityLabel("Rescan folder")
-                        .disabled(store.isScanning)
-                }
-            }
+            .toolbar { LibraryToolbar() }
         }
     }
 
     private var summary: String {
+        if store.libraryView == .bin { return "\(Format.mix(store.markedItems)) · \(Format.size(store.markedBytes))" }
         let v = store.scope.filter(\.isVideo).count
         let i = store.scope.count - v
-        return "\(i) image\(i == 1 ? "" : "s") · \(v) video\(v == 1 ? "" : "s")"
+        return "\(Format.plural(i, "image")) · \(Format.plural(v, "video"))"
+    }
+}
+
+private struct LibraryToolbar: ToolbarContent {
+    @Environment(LibraryStore.self) private var store
+
+    var body: some ToolbarContent {
+        ToolbarItemGroup {
+            if store.libraryView == .all {
+                Button { store.startScan() } label: { Image(systemName: "arrow.clockwise") }
+                    .help("Rescan")
+                    .accessibilityLabel("Rescan folder")
+                    .disabled(store.isScanning)
+                Button { store.libraryView = .bin } label: {
+                    Label("To Be Binned (\(store.markedItems.count))", systemImage: "trash")
+                }
+                Button { store.startReview() } label: {
+                    Label("Start Slideshow Review", systemImage: "play.fill")
+                }
+                .disabled(store.scope.isEmpty)
+            } else {
+                Button("Review Again") { store.libraryView = .all; store.startReview() }
+                    .disabled(store.scope.isEmpty)
+                Button("Unmark All") { store.unmarkAll() }
+                    .disabled(store.markedItems.isEmpty)
+            }
+        }
     }
 }
 
@@ -140,10 +165,21 @@ struct SidebarView: View {
                     Button {
                         store.libraryView = .bin
                     } label: {
-                        Label("To Be Binned", systemImage: "trash")
-                            .foregroundStyle(Theme.text)
+                        HStack {
+                            Label("To Be Binned", systemImage: "trash")
+                            Spacer()
+                            let n = store.markedItems.count
+                            Text("\(n)")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(n == 0 ? Theme.textSecondary : .white)
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 1)
+                                .background(n == 0 ? Color.clear : Theme.destructive, in: Capsule())
+                        }
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .listRowBackground(store.libraryView == .bin ? Theme.sidebarSelected : Color.clear)
                 }
             }
             .listStyle(.sidebar)

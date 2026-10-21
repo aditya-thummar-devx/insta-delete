@@ -1,4 +1,3 @@
-import CoreGraphics
 import Foundation
 
 struct MediaItem: Identifiable, Hashable {
@@ -13,8 +12,7 @@ struct MediaItem: Identifiable, Hashable {
     let folder: Folder
     /// Path relative to the granted root, shown as "~/Pictures" style in the UI.
     let displayFolder: String
-    var duration: Double?
-    var pixelSize: CGSize?
+    // Duration / pixel size load lazily via MetadataLoader so scanning stays cheap.
 
     var isVideo: Bool { kind == .video }
 }
