@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>InstaDelete — Review complete</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#64A8FF}a:hover{color:#9CC7FF}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; display: flex; flex-direction: column; background: #141416; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Helvetica Neue', sans-serif; color: #F5F5F7; border: 1px solid #2C2C30; border-radius: 12px; overflow: hidden">
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 18px; border-bottom: 1px solid #2A2A2E">
+    <div style="display: flex; gap: 8px">
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #FF5F57"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #28C840"></span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; margin-right: 52px">
+      <div style="font-size: 13px; font-weight: 600">Image 248 of 248</div>
+      <div style="width: 320px; height: 4px; border-radius: 2px; background: #64A8FF"></div>
+    </div>
+  </div>
+
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px">
+    <div style="width: 620px; display: flex; flex-direction: column; align-items: center; gap: 28px; text-align: center">
+      <div style="width: 72px; height: 72px; border-radius: 50%; background: #13351E; color: #4ADE80; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h1 style="margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.4px">You’ve reviewed all 248 images</h1>
+        <p style="margin: 0; font-size: 15px; color: #A1A1A6">Nothing has been moved yet. Check your list before anything goes to the Bin.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%">
+        <div style="padding: 18px; border-radius: 12px; background: #1F1F23; border: 1px solid #3A1A1E; text-align: left; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 13px; color: #FFB4B0; font-weight: 600">To be binned</div>
+          <div style="font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums">12</div>
+          <div style="font-size: 13px; color: #A1A1A6">48.6 MB</div>
+        </div>
+        <div style="padding: 18px; border-radius: 12px; background: #1F1F23; border: 1px solid #2A2A2E; text-align: left; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 13px; color: #A1A1A6; font-weight: 600">Kept</div>
+          <div style="font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums">236</div>
+          <div style="font-size: 13px; color: #A1A1A6">Stay exactly where they are</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; align-items: center">
+        <sc-for list="{{strip}}" as="s" hint-placeholder-count="6">
+          <div style="position: relative; width: 72px; height: 54px; border-radius: 5px; overflow: hidden; background: {{s}}; box-shadow: inset 0 0 0 2px #FF453A">
+            <span style="position: absolute; inset: 0; background: rgba(20, 0, 4, 0.5)"></span>
+          </div>
+        </sc-for>
+        <div style="width: 72px; height: 54px; border-radius: 5px; background: #2A2A2E; color: #C7C7CC; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center">+6</div>
+      </div>
+
+      <div style="display: flex; gap: 12px">
+        <a href="Gallery.dc.html" style="display: flex; align-items: center; height: 44px; padding: 0 20px; border-radius: 10px; background: #2A2A2E; color: #F5F5F7; font-size: 14px; font-weight: 500; text-decoration: none">Back to Gallery</a>
+        <a href="BinList.dc.html" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 22px; border-radius: 10px; background: #0062CC; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none">Check To Be Binned (12)</a>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { strip: ['#D4B8B0', '#A9B8C9', '#E8D5B7', '#CBBFD6', '#B8C4A9', '#D9C9A8'] };
+  }
+}
+</script>
+</body>
+</html>

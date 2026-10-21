@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>InstaDelete — Slideshow review</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#64A8FF}a:hover{color:#9CC7FF}
+</style>
+</helmet>
+<div onKeyDown="{{onKey}}" style="width: 1280px; height: 800px; box-sizing: border-box; display: flex; flex-direction: column; background: #141416; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Helvetica Neue', sans-serif; color: #F5F5F7; border: 1px solid #2C2C30; border-radius: 12px; overflow: hidden">
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 18px; border-bottom: 1px solid #2A2A2E">
+    <div style="display: flex; gap: 8px">
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #FF5F57"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #28C840"></span>
+    </div>
+    <a href="Gallery.dc.html" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 7px; background: #2A2A2E; color: #F5F5F7; font-size: 13px; font-weight: 500; text-decoration: none">
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      Exit Review
+    </a>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px">
+      <div style="font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums">Image {{pos}} of {{total}}</div>
+      <div style="width: 320px; height: 4px; border-radius: 2px; background: #2E2E33; overflow: hidden">
+        <div style="height: 100%; background: #64A8FF; width: {{pct}}"></div>
+      </div>
+    </div>
+    <a href="BinList.dc.html" style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 7px; background: #3A1418; color: #FFB4B0; font-size: 13px; font-weight: 600; text-decoration: none; font-variant-numeric: tabular-nums">
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"></path><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"></path><path d="M9 7V4h6v3"></path></svg>
+      {{markedCount}} to be binned
+    </a>
+  </div>
+
+  <div style="flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 28px; padding: 20px 28px 10px">
+    <button type="button" aria-label="Previous image" onClick="{{prev}}" style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; border: 0; background: #2A2A2E; color: #F5F5F7; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </button>
+    <div style="position: relative; width: 820px; height: 440px; border-radius: 8px; overflow: hidden; background: {{cur.color}}; {{stageRing}}">
+      <svg aria-hidden="true" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid slice" style="position: absolute; inset: 0; width: 100%; height: 100%"><circle cx="74" cy="18" r="6" fill="rgba(255,255,255,0.55)"></circle><path d="M0 48 L26 28 L44 40 L66 22 L100 46 L100 60 L0 60 Z" fill="rgba(0,0,0,0.13)"></path></svg>
+      <sc-if value="{{isMarked}}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; inset: 0; background: rgba(20, 0, 4, 0.55)"></div>
+        <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px">
+          <div style="width: 64px; height: 64px; border-radius: 50%; background: #D70015; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.4)">
+            <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"></path><path d="M10 11v6M14 11v6"></path><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"></path><path d="M9 7V4h6v3"></path></svg>
+          </div>
+          <div style="font-size: 18px; font-weight: 700; color: #FFFFFF">Marked to be binned</div>
+          <div style="font-size: 13px; color: #E5E5EA">Nothing moves until you confirm the list</div>
+        </div>
+      </sc-if>
+    </div>
+    <button type="button" aria-label="Next image" onClick="{{next}}" style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; border: 0; background: #2A2A2E; color: #F5F5F7; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+    </button>
+  </div>
+
+  <div style="display: flex; justify-content: center; gap: 14px; font-size: 12px; color: #A1A1A6; padding-bottom: 10px; font-variant-numeric: tabular-nums">
+    <span style="color: #F5F5F7; font-weight: 600">{{cur.name}}</span>
+    <span>{{cur.folder}}</span>
+    <span>{{cur.size}}</span>
+    <span>4032 × 3024</span>
+  </div>
+
+  <div style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 4px 0 14px">
+    <button type="button" onClick="{{prev}}" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #2A2A2E; color: #F5F5F7; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">
+      <kbd style="font-family: inherit; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #4A4A50; color: #C7C7CC">←</kbd> Previous
+    </button>
+    <sc-if value="{{notMarked}}" hint-placeholder-val="{{ true }}">
+      <button type="button" onClick="{{toggle}}" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 22px; border-radius: 10px; border: 1px solid #D70015; background: transparent; color: #FFB4B0; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; min-width: 200px; justify-content: center">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"></path><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"></path><path d="M9 7V4h6v3"></path></svg>
+        Mark to Bin
+        <kbd style="font-family: inherit; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #7A2A30; color: #FFB4B0">⌫</kbd>
+      </button>
+    </sc-if>
+    <sc-if value="{{isMarked}}" hint-placeholder-val="{{ false }}">
+      <button type="button" onClick="{{toggle}}" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 22px; border-radius: 10px; border: 0; background: #D70015; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; min-width: 200px; justify-content: center">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h11a5 5 0 0 1 0 10h-3"></path></svg>
+        Unmark
+        <kbd style="font-family: inherit; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #FF8A8F; color: #FFFFFF">⌫</kbd>
+      </button>
+    </sc-if>
+    <sc-if value="{{notAtEnd}}" hint-placeholder-val="{{ true }}">
+      <button type="button" onClick="{{next}}" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #2A2A2E; color: #F5F5F7; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">
+        Next <kbd style="font-family: inherit; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #4A4A50; color: #C7C7CC">→</kbd>
+      </button>
+    </sc-if>
+    <sc-if value="{{atEnd}}" hint-placeholder-val="{{ false }}">
+      <a href="ReviewComplete.dc.html" style="display: flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 10px; background: #0062CC; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none">Finish Review</a>
+    </sc-if>
+  </div>
+
+  <div style="height: 92px; flex-shrink: 0; border-top: 1px solid #2A2A2E; background: #0E0E10; display: flex; align-items: center; justify-content: center; gap: 8px">
+    <sc-for list="{{film}}" as="f" hint-placeholder-count="9">
+      <button type="button" aria-label="{{f.label}}" onClick="{{f.go}}" style="position: relative; width: 84px; height: 60px; padding: 0; border: 0; border-radius: 5px; overflow: hidden; cursor: pointer; background: {{f.color}}; {{f.ring}}">
+        <sc-if value="{{f.marked}}" hint-placeholder-val="{{ false }}">
+          <span style="position: absolute; inset: 0; background: rgba(20, 0, 4, 0.55)"></span>
+          <span style="position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; background: #D70015; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+            <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"></path><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"></path></svg>
+          </span>
+        </sc-if>
+      </button>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { idx: 36, marked: { 3: true, 8: true, 11: true, 19: true, 22: true, 27: true, 30: true, 33: true, 35: true } };
+  }
+  item(i) {
+    const colors = ['#C9D6DF','#E8D5B7','#B8C4A9','#D4B8B0','#A9B8C9','#E3CFC1','#BFCFC4','#CBBFD6','#D9C9A8','#AFC3C9','#D8C3C9','#B5C7B9'];
+    const folders = ['~/Pictures', '~/Downloads', '~/Desktop', '~/Documents/Scans'];
+    return {
+      color: colors[(i * 7) % colors.length],
+      name: (i % 5 === 4 ? 'Screenshot ' : 'IMG_') + (4021 + i) + (i % 5 === 4 ? '.png' : '.HEIC'),
+      folder: folders[i % folders.length],
+      size: (1.2 + ((i * 37) % 40) / 10).toFixed(1) + ' MB'
+    };
+  }
+  renderVals() {
+    const total = 248;
+    const idx = this.state.idx;
+    const marked = this.state.marked;
+    const go = (i) => this.setState({ idx: Math.max(0, Math.min(total - 1, i)) });
+    const prev = () => go(this.state.idx - 1);
+    const next = () => go(this.state.idx + 1);
+    const toggle = () => {
+      const m = Object.assign({}, this.state.marked);
+      m[this.state.idx] = !m[this.state.idx];
+      this.setState({ marked: m });
+    };
+    const onKey = (e) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+      else if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); toggle(); }
+    };
+    const isMarked = !!marked[idx];
+    const film = [];
+    for (let k = idx - 4; k <= idx + 4; k++) {
+      if (k < 0 || k >= total) continue;
+      const it = this.item(k);
+      const m = !!marked[k];
+      const isCur = k === idx;
+      film.push({
+        color: it.color,
+        marked: m,
+        label: 'Go to ' + it.name + (m ? ', marked to be binned' : ''),
+        ring: isCur ? 'box-shadow: 0 0 0 2px #0E0E10, 0 0 0 4px #F5F5F7' : (m ? 'box-shadow: inset 0 0 0 2px #FF453A' : 'opacity: 0.85'),
+        go: () => go(k)
+      });
+    }
+    const markedCount = Object.keys(marked).filter((k) => marked[k]).length;
+    return {
+      total, pos: idx + 1, pct: ((idx + 1) / total * 100).toFixed(1) + '%',
+      cur: this.item(idx), isMarked, notMarked: !isMarked,
+      stageRing: isMarked ? 'box-shadow: 0 0 0 4px #FF453A' : '',
+      atEnd: idx === total - 1, notAtEnd: idx !== total - 1,
+      markedCount, film, prev, next, toggle, onKey
+    };
+  }
+}
+</script>
+</body>
+</html>
