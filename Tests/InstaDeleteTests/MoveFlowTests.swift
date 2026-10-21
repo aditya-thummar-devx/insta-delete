@@ -33,7 +33,7 @@ final class MoveFlowTests: XCTestCase {
     private func makeItem(_ path: String) throws -> MediaItem {
         let url = dir.appendingPathComponent(path)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try Data([1, 2, 3]).write(to: url)
+        try Fixtures.png.write(to: url)
         return try XCTUnwrap(Scanner.classify(url, folder: .pictures, root: dir, home: dir, keys: Set(Scanner.resourceKeys)))
     }
 
@@ -80,7 +80,7 @@ final class MoveFlowTests: XCTestCase {
 
     func testRefusesFilesChangedSinceScan() async throws {
         let item = try makeItem("a.jpg")
-        try Data([1, 2, 3, 4, 5]).write(to: item.id)  // size differs from the scanned item
+        try (Fixtures.png + Data([0])).write(to: item.id)  // size differs from the scanned item
         guard case .done(let result) = await flow(auth: .success).run([item]) else { return XCTFail() }
         XCTAssertTrue(fake.trashed.isEmpty)
         XCTAssertEqual(result.failed.count, 1)

@@ -1,4 +1,5 @@
 import Foundation
+import ImageIO
 import UniformTypeIdentifiers
 
 enum ScanEvent: Sendable {
@@ -81,9 +82,11 @@ enum Scanner {
         guard let v = try? url.resourceValues(forKeys: keys),
               v.isPackage != true, v.isDirectory != true,
               let type = v.contentType else { return nil }
+        // The extension only nominates a candidate; the bytes must agree (e.g. `.ts` is both
+        // MPEG-TS video and TypeScript, and any file can be misnamed).
         let kind: MediaItem.Kind
-        if type.conforms(to: .image) { kind = .image }
-        else if type.conforms(to: .movie) { kind = .video }  // .movie excludes audio-only files
+        if type.conforms(to: .image), ContentSniffer.isImage(url) { kind = .image }
+        else if type.conforms(to: .movie), ContentSniffer.isVideo(url) { kind = .video }  // .movie excludes audio-only
         else { return nil }
         return MediaItem(
             id: url, name: url.lastPathComponent, kind: kind,
@@ -119,5 +122,45 @@ enum Scanner {
             items.removeAll(keepingCapacity: true)
             last = Date()
         }
+    }
+}
+
+/// Checks a file's actual contents, not its name.
+enum ContentSniffer {
+    /// ImageIO must recognise the header and report a pixel size (rejects text, truncated and vector-only files).
+    static func isImage(_ url: URL) -> Bool {
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
+              CGImageSourceGetType(src) != nil, CGImageSourceGetCount(src) > 0,
+              let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any] else { return false }
+        return props[kCGImagePropertyPixelWidth] != nil
+    }
+
+    /// Magic-number check for the container formats macOS treats as movies.
+    static func isVideo(_ url: URL) -> Bool {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
+        defer { try? handle.close() }
+        guard let data = try? handle.read(upToCount: 512) else { return false }
+        return isVideoHeader([UInt8](data))
+    }
+
+    static func isVideoHeader(_ b: [UInt8]) -> Bool {
+        guard b.count >= 12 else { return false }
+        func has(_ bytes: [UInt8], at i: Int) -> Bool { b.count >= i + bytes.count && Array(b[i..<i + bytes.count]) == bytes }
+        func has(_ s: String, at i: Int) -> Bool { has(Array(s.utf8), at: i) }
+        /// Transport stream: 0x47 sync byte repeating every packet, checked across 3 packets so text can't pass by chance.
+        func syncs(offset: Int, packet: Int) -> Bool {
+            b.count > offset + 2 * packet && (0..<3).allSatisfy { b[offset + $0 * packet] == 0x47 }
+        }
+
+        return ["ftyp", "moov", "mdat", "wide", "free", "skip", "pnot"].contains { has($0, at: 4) }  // MP4 / MOV / M4V / 3GP
+            || syncs(offset: 0, packet: 188)                       // MPEG-TS (.ts)
+            || syncs(offset: 4, packet: 192)                       // BDAV / AVCHD (.m2ts, .mts)
+            || has([0x00, 0x00, 0x01, 0xBA], at: 0)                // MPEG program stream (.mpg, .vob)
+            || has([0x00, 0x00, 0x01, 0xB3], at: 0)                // MPEG-1/2 elementary video
+            || (has("RIFF", at: 0) && has("AVI ", at: 8))          // AVI
+            || has([0x1A, 0x45, 0xDF, 0xA3], at: 0)                // Matroska / WebM
+            || has("FLV", at: 0)                                   // Flash video
+            || has([0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11], at: 0)  // ASF / WMV
+            || has("OggS", at: 0)                                  // Ogg (.ogv)
     }
 }
