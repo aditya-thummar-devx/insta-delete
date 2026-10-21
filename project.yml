@@ -6,9 +6,13 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
+    # No signing, and never automatic: no team, no identity, no provisioning.
     CODE_SIGN_STYLE: Manual
-    CODE_SIGN_IDENTITY: "-"
-    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGN_IDENTITY: ""
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: NO
 targets:
   InstaDelete:
     type: application
