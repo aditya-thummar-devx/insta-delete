@@ -8,16 +8,63 @@ struct LibraryScreen: View {
             SidebarView()
                 .navigationSplitViewColumnWidth(230)
         } detail: {
-            VStack(spacing: 8) {
-                Text("No photos or videos yet")
-                    .font(.system(size: 17, weight: .semibold))
-                Text("Grant access to a folder to start scanning.")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Theme.textSecondary)
+            VStack(spacing: 0) {
+                if store.isScanning { ScanBanner() }
+                if store.scope.isEmpty {
+                    EmptyState(scanning: store.isScanning)
+                } else {
+                    MediaGrid(items: store.scope)
+                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationTitle(store.selectedFolder.rawValue)
+            .navigationSubtitle(summary)
+            .toolbar {
+                ToolbarItem {
+                    Button { store.startScan() } label: { Image(systemName: "arrow.clockwise") }
+                        .help("Rescan")
+                        .accessibilityLabel("Rescan folder")
+                        .disabled(store.isScanning)
+                }
+            }
         }
+    }
+
+    private var summary: String {
+        let v = store.scope.filter(\.isVideo).count
+        let i = store.scope.count - v
+        return "\(i) image\(i == 1 ? "" : "s") · \(v) video\(v == 1 ? "" : "s")"
+    }
+}
+
+private struct EmptyState: View {
+    let scanning: Bool
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(scanning ? "Scanning…" : "No photos or videos here")
+                .font(.system(size: 17, weight: .semibold))
+            Text(scanning ? "Items appear as they’re found." : "Try another folder or rescan.")
+                .font(.system(size: 14))
+                .foregroundStyle(Theme.textSecondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct ScanBanner: View {
+    @Environment(LibraryStore.self) private var store
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ProgressView().controlSize(.small)
+            Text("Still scanning… \(store.imageCount + store.videoCount) found so far")
+                .font(.system(size: 13))
+            Spacer()
+            Button("Stop") { store.stopScan() }.controlSize(.small)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .background(Color(hex: 0xEEF4FC))
     }
 }
 
@@ -25,7 +72,6 @@ struct SidebarView: View {
     @Environment(LibraryStore.self) private var store
 
     var body: some View {
-        @Bindable var store = store
         VStack(alignment: .leading, spacing: 0) {
             List(selection: Binding(
                 get: { store.libraryView == .all ? store.selectedFolder : nil },

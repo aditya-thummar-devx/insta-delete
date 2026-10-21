@@ -8,7 +8,9 @@ struct RootView: View {
             switch store.phase {
             case .access:
                 AccessView()
-            case .library, .scanning, .review, .complete:
+            case .scanning:
+                ScanningView()
+            case .library, .review, .complete:
                 // Later milestones route to dedicated screens.
                 LibraryScreen()
             }

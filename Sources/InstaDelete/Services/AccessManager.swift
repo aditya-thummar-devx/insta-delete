@@ -12,7 +12,7 @@ final class AccessManager {
     init(defaults: UserDefaults = .standard) { self.defaults = defaults }
 
     /// The real home directory. `NSHomeDirectory()` returns the container when sandboxed.
-    static var realHome: URL {
+    nonisolated static var realHome: URL {
         if let pw = getpwuid(getuid()), let dir = pw.pointee.pw_dir {
             return URL(fileURLWithPath: String(cString: dir), isDirectory: true)
         }
