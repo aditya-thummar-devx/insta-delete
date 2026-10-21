@@ -11,10 +11,10 @@ struct BinListView: View {
                 Text("InstaDelete never deletes files. These will move to the Bin in Finder, where you can put them back until you empty it.")
             }
             .font(.system(size: 13))
-            .foregroundStyle(Color(hex: 0x1D3A66))
+            .foregroundStyle(Theme.infoText)
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(hex: 0xEEF4FC), in: RoundedRectangle(cornerRadius: 10))
+            .background(Theme.infoBG, in: RoundedRectangle(cornerRadius: 10))
             .padding(.horizontal, 20)
             .padding(.top, 14)
 
@@ -44,7 +44,7 @@ private struct BinCell: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Color(hex: 0xE5E5EA)
+            Theme.tilePlaceholder
                 .aspectRatio(1, contentMode: .fit)
                 .overlay { ThumbnailImage(url: item.id) }
                 .overlay(alignment: .topLeading) { if item.isVideo { VideoBadge(url: item.id, item: item) } }
@@ -56,7 +56,7 @@ private struct BinCell: View {
                         .foregroundStyle(Theme.text)
                         .padding(.horizontal, 10)
                         .frame(height: 26)
-                        .background(.white.opacity(0.92), in: Capsule())
+                        .background(Theme.windowBG.opacity(0.92), in: Capsule())
                         .shadow(color: .black.opacity(0.2), radius: 1.5, y: 1)
                         .padding(6)
                         .accessibilityLabel("Unmark \(item.name)")

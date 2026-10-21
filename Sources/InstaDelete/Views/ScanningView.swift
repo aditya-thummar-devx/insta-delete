@@ -44,7 +44,7 @@ struct ScanningView: View {
                     if index < Scanner.folderOrder.count - 1 { Divider() }
                 }
             }
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: 0xE5E5EA)))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder))
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
             HStack(spacing: 12) {
@@ -60,7 +60,7 @@ struct ScanningView: View {
         .frame(width: 600)
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white)
+        .background(Theme.windowBG)
         .foregroundStyle(Theme.text)
     }
 }
@@ -87,7 +87,7 @@ private struct FolderRow: View {
         HStack(spacing: 12) {
             switch state {
             case .done:
-                Image(systemName: "checkmark.circle").foregroundStyle(Color(hex: 0x1E7B34))
+                Image(systemName: "checkmark.circle").foregroundStyle(Theme.successFG)
                     .accessibilityLabel("Done")
             case .scanning:
                 ProgressView().controlSize(.small).accessibilityLabel("Scanning")

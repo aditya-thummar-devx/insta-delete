@@ -153,7 +153,7 @@ private struct ScanBanner: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 8)
-        .background(Color(hex: 0xEEF4FC))
+        .background(Theme.infoBG)
     }
 }
 
@@ -206,9 +206,9 @@ struct SidebarView: View {
                 Text("InstaDelete never deletes. Approved files move to the Bin.")
             }
             .font(.system(size: 11))
-            .foregroundStyle(Color(hex: 0x4A4A4F))
+            .foregroundStyle(Theme.sidebarNoteFG)
             .padding(10)
-            .background(Color(hex: 0xE9E9EE), in: RoundedRectangle(cornerRadius: 8))
+            .background(Theme.sidebarNoteBG, in: RoundedRectangle(cornerRadius: 8))
             .padding(10)
         }
     }

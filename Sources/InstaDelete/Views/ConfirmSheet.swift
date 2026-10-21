@@ -13,7 +13,7 @@ struct ConfirmSheet: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Theme.destructive)
                         .frame(width: 28, height: 28)
-                        .background(.white, in: Circle())
+                        .background(Theme.windowBG, in: Circle())
                         .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
                         .offset(x: 8, y: 8)
                 }

@@ -34,7 +34,7 @@ To Be Binned list → Confirm dialog → Touch ID / password → Moved to Trash 
   white 50% veil, red trash badge top-right. Click a tile → review starting at that item.
 - The review uses the current folder + filter + sort as its queue.
 
-### 4. Slideshow review (dark)
+### 4. Slideshow review (follows the Appearance setting)
 - Top bar: Exit, scope chip (e.g. "Videos · Size ↓"), "12 of 32" + progress bar,
   "n to be binned" button (opens list).
 - Centre: 16:9 viewer with ‹ › buttons. Videos: big play button, control bar
@@ -89,6 +89,10 @@ struct MediaItem: Identifiable, Hashable {
 Marked set: `Set<URL>` persisted. Library store exposes filtered + sorted arrays.
 
 ## Design tokens (from the prototype)
+
+Appearance setting (Settings, ⌘,): System / Light / Dark, applied app-wide via `NSApp.appearance`.
+Every token has a light and a dark value — see `Sources/InstaDelete/Views/Theme.swift`.
+The values below are the prototype originals (main screens = light, review = dark).
 
 | Token | Value |
 |---|---|

@@ -11,5 +11,7 @@ struct InstaDeleteApp: App {
                 .frame(minWidth: 960, minHeight: 640)
         }
         .defaultSize(width: 1280, height: 800)
+
+        Settings { SettingsView() }
     }
 }

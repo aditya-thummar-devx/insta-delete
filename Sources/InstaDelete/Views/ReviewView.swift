@@ -28,8 +28,7 @@ struct ReviewView: View {
             Filmstrip(session: session)
         }
         .background(Theme.reviewBG)
-        .foregroundStyle(Color(hex: 0xF5F5F7))
-        .preferredColorScheme(.dark)
+        .foregroundStyle(Theme.text)
         .focusable()
         .focused($focused)
         .focusEffectDisabled()
@@ -49,7 +48,9 @@ struct ReviewView: View {
         switch press.key {
         case .leftArrow: session.previous()
         case .rightArrow: next()
-        case .delete, .deleteForward: if let item = session.current { store.toggleMark(item) }
+        // The Mac Delete (backspace) key sends U+007F, which is neither `.delete` (U+0008) nor `.deleteForward` (U+F728).
+        case .delete, .deleteForward, KeyEquivalent("\u{7F}"):
+            if let item = session.current { store.toggleMark(item) }
         case .escape: store.exitReview()
         case .space:
             guard session.current?.isVideo == true else { return .ignored }
@@ -87,17 +88,17 @@ private struct TopBar: View {
 
             Text(session.scopeLabel)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Color(hex: 0x9CC7FF))
+                .foregroundStyle(Theme.infoText)
                 .padding(.horizontal, 10)
                 .frame(height: 24)
-                .background(Color(hex: 0x1F2A3A), in: Capsule())
+                .background(Theme.accentSoftBG, in: Capsule())
 
             Spacer()
             VStack(spacing: 6) {
                 Text("\(session.queue.isEmpty ? 0 : session.index + 1) of \(session.queue.count)")
                     .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 ProgressView(value: Double(session.index + 1), total: Double(max(1, session.queue.count)))
-                    .tint(Color(hex: 0x64A8FF))
+                    .tint(Theme.accent)
                     .frame(width: 300)
                     .accessibilityHidden(true)
             }
@@ -106,17 +107,17 @@ private struct TopBar: View {
             Button { store.openBin() } label: {
                 Label("\(store.markedItems.count) to be binned", systemImage: "trash")
                     .font(.system(size: 13, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(Color(hex: 0xFFB4B0))
+                    .foregroundStyle(Theme.destructiveSoftFG)
                     .padding(.horizontal, 12)
                     .frame(height: 30)
-                    .background(Color(hex: 0x3A1418), in: RoundedRectangle(cornerRadius: 7))
+                    .background(Theme.destructiveSoftBG, in: RoundedRectangle(cornerRadius: 7))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Open To Be Binned list, \(store.markedItems.count) items")
         }
         .padding(.horizontal, 18)
         .frame(height: 56)
-        .overlay(alignment: .bottom) { Rectangle().fill(Color(hex: 0x26262A)).frame(height: 1) }
+        .overlay(alignment: .bottom) { Rectangle().fill(Theme.reviewDivider).frame(height: 1) }
     }
 }
 
@@ -185,7 +186,7 @@ private struct Viewer: View {
         .aspectRatio(16 / 9, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay {
-            RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.markRingDark, lineWidth: marked ? 4 : 0)
+            RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.reviewMarkRing, lineWidth: marked ? 4 : 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityLabel("\(item.name)\(marked ? ", marked to be binned" : "")")
@@ -229,7 +230,7 @@ private struct DetailsPanel: View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(item.name).font(.system(size: 17, weight: .bold)).lineLimit(3)
-                Text(item.displayFolder).font(.system(size: 12)).foregroundStyle(Color(hex: 0xA1A1A6))
+                Text(item.displayFolder).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
             }
 
             Grid(alignment: .leading, horizontalSpacing: 0, verticalSpacing: 10) {
@@ -252,7 +253,7 @@ private struct DetailsPanel: View {
                     }
                     .font(.system(size: 15, weight: .semibold))
                     .frame(maxWidth: .infinity, minHeight: 48)
-                    .foregroundStyle(marked ? Color.white : Color(hex: 0xFFB4B0))
+                    .foregroundStyle(marked ? Color.white : Theme.destructiveSoftFG)
                     .background(marked ? Theme.markRing : .clear, in: RoundedRectangle(cornerRadius: 10))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.markRing, lineWidth: marked ? 0 : 1))
                     .contentShape(RoundedRectangle(cornerRadius: 10))
@@ -266,7 +267,7 @@ private struct DetailsPanel: View {
                     }
                     .font(.system(size: 14, weight: .semibold))
                     .frame(maxWidth: .infinity, minHeight: 44)
-                    .foregroundStyle(session.isLast ? Color.white : Color(hex: 0xF5F5F7))
+                    .foregroundStyle(session.isLast ? Color.white : Theme.text)
                     .background(session.isLast ? Theme.accent : Theme.reviewChip, in: RoundedRectangle(cornerRadius: 10))
                     .contentShape(RoundedRectangle(cornerRadius: 10))
                 }
@@ -279,7 +280,7 @@ private struct DetailsPanel: View {
                     }
                     .font(.system(size: 13))
                     .frame(maxWidth: .infinity, minHeight: 36)
-                    .foregroundStyle(Color(hex: 0xC7C7CC))
+                    .foregroundStyle(Theme.textSecondary)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -291,13 +292,13 @@ private struct DetailsPanel: View {
                 .foregroundStyle(Color(hex: 0x8E8E93))
                 .padding(.top, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .overlay(alignment: .top) { Rectangle().fill(Color(hex: 0x26262A)).frame(height: 1) }
+                .overlay(alignment: .top) { Rectangle().fill(Theme.reviewDivider).frame(height: 1) }
         }
         .padding(.init(top: 22, leading: 20, bottom: 18, trailing: 20))
         .frame(width: 300)
         .frame(maxHeight: .infinity)
         .background(Theme.reviewPanel)
-        .overlay(alignment: .leading) { Rectangle().fill(Color(hex: 0x26262A)).frame(width: 1) }
+        .overlay(alignment: .leading) { Rectangle().fill(Theme.reviewDivider).frame(width: 1) }
         .task(id: item.id) {
             meta = MediaMetadata()
             meta = await MetadataLoader.shared.metadata(for: item)
@@ -347,7 +348,7 @@ private struct Filmstrip: View {
         .frame(maxWidth: .infinity)
         .frame(height: 88)
         .background(Theme.reviewFilmstrip)
-        .overlay(alignment: .top) { Rectangle().fill(Color(hex: 0x26262A)).frame(height: 1) }
+        .overlay(alignment: .top) { Rectangle().fill(Theme.reviewDivider).frame(height: 1) }
     }
 }
 
@@ -359,7 +360,7 @@ private struct FilmCell: View {
 
     var body: some View {
         Button(action: action) {
-            Color(hex: 0x26262A)
+            Theme.reviewChip
                 .overlay { ThumbnailImage(url: item.id) }
                 .overlay(alignment: .bottomLeading) {
                     if item.isVideo {
@@ -394,12 +395,12 @@ private struct FilmCell: View {
                 .clipShape(RoundedRectangle(cornerRadius: 5))
                 .overlay {
                     if marked && !current {
-                        RoundedRectangle(cornerRadius: 5).strokeBorder(Theme.markRingDark, lineWidth: 2)
+                        RoundedRectangle(cornerRadius: 5).strokeBorder(Theme.reviewMarkRing, lineWidth: 2)
                     }
                 }
                 .padding(2)
                 .overlay {
-                    if current { RoundedRectangle(cornerRadius: 7).stroke(Color(hex: 0xF5F5F7), lineWidth: 2) }
+                    if current { RoundedRectangle(cornerRadius: 7).stroke(Theme.text, lineWidth: 2) }
                 }
                 .opacity(current || marked ? 1 : 0.8)
         }

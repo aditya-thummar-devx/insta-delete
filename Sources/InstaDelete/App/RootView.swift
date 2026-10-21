@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(LibraryStore.self) private var store
+    @AppStorage("appTheme") private var theme = AppTheme.system
 
     var body: some View {
         Group {
@@ -19,5 +20,7 @@ struct RootView: View {
             }
         }
         .task { store.bootstrap() }
+        // App-wide, not per-view: `preferredColorScheme` on a subview recolours the whole window and sticks.
+        .onChange(of: theme, initial: true) { NSApp.appearance = theme.appearance }
     }
 }
