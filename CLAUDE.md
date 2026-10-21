@@ -50,3 +50,22 @@ A ready-made macOS icon set is at `Resources/Assets.xcassets/AppIcon.appiconset`
 (16–512 pt at @1x/@2x, plus `Contents.json`). Add `Resources/Assets.xcassets` to the app
 target in `project.yml` and set `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Do not redraw it.
 Source artwork: `design/AppIcon/AppIcon.svg` (1024 × 1024, macOS grid: 824 px body, 100 px margin).
+
+## Updates (Sparkle OTA)
+
+Release builds update themselves with Sparkle 2: hourly check, silent download, installed when the user quits.
+Debug builds never start the updater (they would fetch the latest release over themselves).
+
+- Config lives in `project.yml` (`packages`, `info:`). `SUFeedURL` points at the latest GitHub release's `appcast.xml`,
+  `SUPublicEDKey` is the EdDSA public key. XcodeGen writes `Sources/InstaDelete/App/Info.plist`; commit it.
+  Never change `SUPublicEDKey` without a rotation plan: installed copies verify updates against the key baked into their old build.
+- The app stays unsigned and unsandboxed in practice (see Tech choices), so Sparkle accepts an update on its EdDSA signature
+  alone and needs no extra entitlements. If signing and the sandbox ever come back, add `SUEnableInstallerLauncherService`,
+  `com.apple.security.network.client` and mach-lookup exceptions for `<bundle id>-spks` / `-spki`
+  (https://sparkle-project.org/documentation/sandboxing/).
+- Release: Actions > Release > Run workflow (version like `0.1.1`), or `scripts/release.sh <version>` on a Mac that holds the
+  private key in its login Keychain (account `insta-delete`). CI reads it from the `release` environment secret
+  `SPARKLE_ED_PRIVATE_KEY`. The build number is the commit count, so never release from a branch with fewer commits than the last release.
+- Dev builds use `CURRENT_PROJECT_VERSION=99999` (see `rebuild-dev`) so a release never replaces them.
+- Hard rule 1 is about the user's media. Sparkle replacing the app bundle during an update is its own business, and `Sources/`
+  still contains no `removeItem`. The release scripts delete nothing (staging goes to `mktemp` directories).

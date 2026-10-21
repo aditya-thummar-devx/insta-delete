@@ -18,6 +18,8 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
 struct SettingsView: View {
     @AppStorage("appTheme") private var theme = AppTheme.system
+    /// nil in debug builds (no updater): the About section then says so instead of showing the button.
+    var onCheckForUpdates: (() -> Void)?
 
     var body: some View {
         Form {
@@ -25,6 +27,16 @@ struct SettingsView: View {
                 ForEach(AppTheme.allCases) { Text($0.label).tag($0) }
             }
             .pickerStyle(.segmented)
+
+            Section("About") {
+                LabeledContent("Version", value: AppVersion.label)
+                LabeledContent("Last updated", value: AppVersion.updatedAt?.formatted(date: .abbreviated, time: .shortened) ?? "—")
+                if let onCheckForUpdates { Button("Check for Updates…", action: onCheckForUpdates) }
+                Text(onCheckForUpdates == nil ? "Update checks are off in debug builds."
+                                              : "Updates are checked every hour, downloaded quietly and installed when you quit InstaDelete.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(20)
         .frame(width: 360)
