@@ -10,6 +10,7 @@ struct LibraryScreen: View {
         } detail: {
             VStack(spacing: 0) {
                 if store.isScanning { ScanBanner() }
+                FilterBar()
                 if store.scope.isEmpty {
                     EmptyState(scanning: store.isScanning)
                 } else {
@@ -33,6 +34,52 @@ struct LibraryScreen: View {
         let v = store.scope.filter(\.isVideo).count
         let i = store.scope.count - v
         return "\(i) image\(i == 1 ? "" : "s") · \(v) video\(v == 1 ? "" : "s")"
+    }
+}
+
+private struct FilterBar: View {
+    @Environment(LibraryStore.self) private var store
+
+    var body: some View {
+        @Bindable var store = store
+        HStack(spacing: 12) {
+            Picker("Filter by type", selection: $store.typeFilter) {
+                ForEach(TypeFilter.allCases) { f in
+                    Text("\(f.rawValue) \(store.typeCounts[f] ?? 0)").tag(f)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+
+            Spacer()
+
+            Menu {
+                Picker("Sort by", selection: Binding(get: { store.sortKey }, set: { store.setSort($0) })) {
+                    ForEach(SortKey.allCases) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.inline)
+                Divider()
+                Picker("Order", selection: $store.sortAscending) {
+                    Text(store.sortKey.orderLabels.asc).tag(true)
+                    Text(store.sortKey.orderLabels.desc).tag(false)
+                }
+                .pickerStyle(.inline)
+            } label: {
+                Label {
+                    Text("Sort: ").foregroundStyle(Theme.textSecondary)
+                        + Text(store.sortKey.rawValue).fontWeight(.semibold)
+                        + Text(store.sortAscending ? " ↑" : " ↓").foregroundStyle(Theme.textSecondary)
+                } icon: {
+                    Image(systemName: "arrow.up.arrow.down")
+                }
+            }
+            .fixedSize()
+            .accessibilityLabel("Sort: \(store.sortKey.rawValue), \(store.sortAscending ? store.sortKey.orderLabels.asc : store.sortKey.orderLabels.desc)")
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 4)
     }
 }
 

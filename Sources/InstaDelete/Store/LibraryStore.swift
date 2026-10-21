@@ -11,10 +11,16 @@ final class LibraryStore {
     var phase: AppPhase = .access
     var libraryView: LibraryMode = .all
     var selectedFolder: Folder = .all { didSet { recomputeScope() } }
+    var typeFilter: TypeFilter = .all { didSet { recomputeScope() } }
+    private(set) var sortKey: SortKey = .modified
+    var sortAscending = SortKey.modified.defaultAscending { didSet { recomputeScope() } }
     private(set) var items: [MediaItem] = []
     /// Items in the current folder (+ filter/sort from M4). Grid and review queue both read this.
     private(set) var scope: [MediaItem] = []
     private(set) var root: URL?
+    /// Items per sidebar folder, and per type within the selected folder (for the segmented control).
+    private(set) var folderCounts: [Folder: Int] = [:]
+    private(set) var typeCounts: [TypeFilter: Int] = [:]
 
     // Scan state
     private(set) var isScanning = false
@@ -26,6 +32,7 @@ final class LibraryStore {
     @ObservationIgnored private let access = AccessManager()
     @ObservationIgnored private var bootstrapped = false
     @ObservationIgnored private var scanTask: Task<Void, Never>?
+    @ObservationIgnored private var lastRecompute = Date.distantPast
 
     /// Called once at launch: skip the Access screen if the stored bookmark is still valid.
     func bootstrap() {
@@ -59,7 +66,7 @@ final class LibraryStore {
         guard let root else { return }
         scanTask?.cancel()
         items = []
-        scope = []
+        recomputeScope()
         imageCount = 0
         videoCount = 0
         currentPath = ""
@@ -78,7 +85,7 @@ final class LibraryStore {
         scanTask?.cancel()
         isScanning = false
         items = []
-        scope = []
+        recomputeScope()
         phase = .access
     }
 
@@ -88,29 +95,45 @@ final class LibraryStore {
     private func handle(_ event: ScanEvent) {
         switch event {
         case .folderStarted(let f): folderStatus[f] = .scanning
-        case .folderDone(let f): folderStatus[f] = .done
+        case .folderDone(let f): folderStatus[f] = .done; recomputeScope()
         case .found(let batch, let path):
             items.append(contentsOf: batch)
             for i in batch { if i.isVideo { videoCount += 1 } else { imageCount += 1 } }
             if !path.isEmpty { currentPath = path }
-            recomputeScope()
+            // Throttle: re-sorting a large library per batch is wasteful while scanning.
+            if Date().timeIntervalSince(lastRecompute) > 0.4 { recomputeScope() }
         }
     }
 
     private func finishScan() {
         isScanning = false
         currentPath = ""
+        recomputeScope()
         if phase == .scanning { phase = .library }
+    }
+
+    // MARK: Sort / filter
+
+    /// Picking a new key resets direction to that key's default (as in the prototype).
+    func setSort(_ key: SortKey) {
+        sortKey = key
+        sortAscending = key.defaultAscending  // didSet recomputes
     }
 
     // MARK: Derived
 
     private func recomputeScope() {
+        lastRecompute = Date()
+        var counts: [Folder: Int] = [.all: items.count]
+        for i in items { counts[i.folder, default: 0] += 1 }
+        folderCounts = counts
+
         let inFolder = selectedFolder == .all ? items : items.filter { $0.folder == selectedFolder }
-        scope = inFolder.sorted { $0.modified > $1.modified }
+        let videos = inFolder.reduce(0) { $0 + ($1.isVideo ? 1 : 0) }
+        typeCounts = [.all: inFolder.count, .images: inFolder.count - videos, .videos: videos]
+
+        scope = MediaQuery.sort(inFolder.filter(typeFilter.matches), key: sortKey, ascending: sortAscending)
     }
 
-    func count(in folder: Folder) -> Int {
-        folder == .all ? items.count : items.filter { $0.folder == folder }.count
-    }
+    func count(in folder: Folder) -> Int { folderCounts[folder] ?? 0 }
 }
