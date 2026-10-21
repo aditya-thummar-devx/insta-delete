@@ -31,6 +31,18 @@ final class LibraryStore {
     // Review
     private(set) var review: ReviewSession?
 
+    // Move to Bin
+    var confirmingMove = false
+    private(set) var isMoving = false
+    /// Records of the most recent move, kept so the toast's Undo can reverse it.
+    private(set) var lastMove: [TrashedRecord] = []
+    var moveError: String?
+
+    var toastTitle: String { "\(Format.mix(lastMove.map(\.item))) moved to the Bin" }
+    var toastSubtitle: String {
+        "\(Format.size(lastMove.reduce(0) { $0 + $1.item.size })) · Put them back any time from the Bin in Finder"
+    }
+
     // Scan state
     private(set) var isScanning = false
     private(set) var folderStatus: [Folder: FolderScanState] = [:]
@@ -40,12 +52,14 @@ final class LibraryStore {
 
     @ObservationIgnored private let access = AccessManager()
     @ObservationIgnored private let marks: MarkedStore
+    @ObservationIgnored private let moveFlow: MoveFlow
     @ObservationIgnored private var bootstrapped = false
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var lastRecompute = Date.distantPast
 
-    init(marks: MarkedStore = MarkedStore()) {
+    init(marks: MarkedStore = MarkedStore(), moveFlow: MoveFlow = MoveFlow()) {
         self.marks = marks
+        self.moveFlow = moveFlow
     }
 
     /// Called once at launch: skip the Access screen if the stored bookmark is still valid.
@@ -78,6 +92,7 @@ final class LibraryStore {
 
     func startScan() {
         guard let root else { return }
+        lastMove = []
         scanTask?.cancel()
         items = []
         recomputeScope()
@@ -151,6 +166,66 @@ final class LibraryStore {
         markedIDs = Set(markedItems.map(\.id))
     }
 
+    // MARK: Move to Bin
+
+    /// Step 1: show the confirmation sheet.
+    func requestMove() {
+        guard !markedItems.isEmpty, !isMoving else { return }
+        confirmingMove = true
+    }
+
+    /// Step 2 (user pressed "Move to Bin"): device authentication, then trash. Nothing moves unless auth succeeds.
+    func performMove() async {
+        confirmingMove = false
+        guard !isMoving else { return }
+        isMoving = true
+        defer { isMoving = false }
+        switch await moveFlow.run(markedItems) {
+        case .cancelled:
+            break
+        case .authFailed(let message):
+            moveError = "Couldn’t verify it’s you (\(message)). Nothing was moved."
+        case .done(let result):
+            apply(result)
+        }
+    }
+
+    private func apply(_ result: TrashResult) {
+        let gone = Set(result.trashed.map(\.original))
+        for url in gone { marks.remove(url) }
+        items.removeAll { gone.contains($0.id) }
+        recomputeScope()
+        lastMove = result.trashed
+        if !result.failed.isEmpty {
+            moveError = failureSummary(result.failed, verb: "move") + " They’re still marked."
+        }
+        if result.failed.isEmpty && !result.trashed.isEmpty {
+            selectedFolder = .all
+            libraryView = .all
+        }
+    }
+
+    func undoMove() {
+        let records = lastMove
+        lastMove = []
+        let (restored, failed) = moveFlow.trash.restore(records)
+        for r in restored {
+            items.append(r.item)
+            marks.add(r.item)
+        }
+        recomputeScope()
+        if !failed.isEmpty { moveError = failureSummary(failed, verb: "put back") }
+        libraryView = .bin
+    }
+
+    func dismissToast() { lastMove = [] }
+
+    private func failureSummary(_ failures: [TrashFailure], verb: String) -> String {
+        let first = failures[0]
+        let head = "\(Format.plural(failures.count, "item")) couldn’t be \(verb == "move" ? "moved" : "put back")"
+        return "\(head). \(first.item.name): \(first.message)"
+    }
+
     // MARK: Review
 
     var scopeLabel: String {
@@ -161,6 +236,7 @@ final class LibraryStore {
 
     func startReview(at index: Int = 0) {
         guard !scope.isEmpty else { return }
+        lastMove = []
         review = ReviewSession(queue: scope, index: index, scopeLabel: scopeLabel)
         phase = .review
     }
@@ -174,6 +250,7 @@ final class LibraryStore {
     func finishReview() { phase = .complete }
 
     func openBin() {
+        lastMove = []
         libraryView = .bin
         review = nil
         phase = .library

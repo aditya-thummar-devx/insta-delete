@@ -103,13 +103,16 @@ private struct TopBar: View {
             }
             Spacer()
 
-            // M7 turns this into a button that opens the list.
-            Label("\(store.markedItems.count) to be binned", systemImage: "trash")
-                .font(.system(size: 13, weight: .semibold).monospacedDigit())
-                .foregroundStyle(Color(hex: 0xFFB4B0))
-                .padding(.horizontal, 12)
-                .frame(height: 30)
-                .background(Color(hex: 0x3A1418), in: RoundedRectangle(cornerRadius: 7))
+            Button { store.openBin() } label: {
+                Label("\(store.markedItems.count) to be binned", systemImage: "trash")
+                    .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(Color(hex: 0xFFB4B0))
+                    .padding(.horizontal, 12)
+                    .frame(height: 30)
+                    .background(Color(hex: 0x3A1418), in: RoundedRectangle(cornerRadius: 7))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open To Be Binned list, \(store.markedItems.count) items")
         }
         .padding(.horizontal, 18)
         .frame(height: 56)

@@ -4,6 +4,7 @@ struct LibraryScreen: View {
     @Environment(LibraryStore.self) private var store
 
     var body: some View {
+        @Bindable var store = store
         NavigationSplitView {
             SidebarView()
                 .navigationSplitViewColumnWidth(230)
@@ -24,6 +25,16 @@ struct LibraryScreen: View {
             .navigationTitle(store.libraryView == .bin ? "To Be Binned" : store.selectedFolder.rawValue)
             .navigationSubtitle(summary)
             .toolbar { LibraryToolbar() }
+            .overlay(alignment: .bottom) {
+                if !store.lastMove.isEmpty { ToastView().padding(.bottom, 28) }
+            }
+        }
+        .sheet(isPresented: $store.confirmingMove) { ConfirmSheet() }
+        .alert("Some items weren’t moved", isPresented: Binding(
+            get: { store.moveError != nil }, set: { if !$0 { store.moveError = nil } })) {
+            Button("OK") { store.moveError = nil }
+        } message: {
+            Text(store.moveError ?? "")
         }
     }
 
@@ -57,6 +68,12 @@ private struct LibraryToolbar: ToolbarContent {
                     .disabled(store.scope.isEmpty)
                 Button("Unmark All") { store.unmarkAll() }
                     .disabled(store.markedItems.isEmpty)
+                Button { store.requestMove() } label: {
+                    Label("Move All to Bin…", systemImage: "trash")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.destructive)
+                .disabled(store.markedItems.isEmpty || store.isMoving)
             }
         }
     }
