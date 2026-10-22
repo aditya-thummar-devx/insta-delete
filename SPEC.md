@@ -40,11 +40,11 @@ To Be Binned list → Confirm dialog → Touch ID / password → Moved to Trash 
 - Centre: 16:9 viewer with ‹ › buttons. Videos: big play button, control bar
   (play/pause, current time, scrubber, duration, mute).
 - Right panel (300px): name, folder, Kind, Size, Modified, Dimensions/Resolution, Duration (video);
-  **Mark to Bin ⌫** (toggles to solid red **Unmark**), **Keep & Next →**
+  **Mark to Bin ⌫** (toggles to solid red **Unmark**, then advances), **Keep & Next →**
   (becomes **Finish Review** on last item), **← Previous**.
 - Marked state: red 4px ring, dark-red overlay, trash icon, "Marked to be binned".
 - Filmstrip of ±5 neighbours, same marked/video badges.
-- Keys: ← / → navigate, Delete/Backspace toggles mark, Space play/pause video,
+- Keys: ← / → navigate, Delete/Backspace toggles mark and advances, Space play/pause video,
   Esc exits. Moving to another item stops the video.
 
 ### 5. Review complete

@@ -22,7 +22,7 @@ struct ReviewView: View {
                 .frame(maxWidth: .infinity)
 
                 if let item = session.current {
-                    DetailsPanel(session: session, item: item, onNext: next)
+                    DetailsPanel(session: session, item: item, onNext: next, onToggle: toggleMarkAndAdvance)
                 }
             }
             Filmstrip(session: session)
@@ -44,13 +44,20 @@ struct ReviewView: View {
         if !session.advance() { store.finishReview() }
     }
 
+    /// Toggle mark on the current item, then move on. Stays put on the last item (no auto-finish).
+    private func toggleMarkAndAdvance() {
+        guard let item = session.current else { return }
+        store.toggleMark(item)
+        session.advance()
+    }
+
     private func handle(_ press: KeyPress) -> KeyPress.Result {
         switch press.key {
         case .leftArrow: session.previous()
         case .rightArrow: next()
         // The Mac Delete (backspace) key sends U+007F, which is neither `.delete` (U+0008) nor `.deleteForward` (U+F728).
         case .delete, .deleteForward, KeyEquivalent("\u{7F}"):
-            if let item = session.current { store.toggleMark(item) }
+            toggleMarkAndAdvance()
         case .escape: store.exitReview()
         case .space:
             guard session.current?.isVideo == true else { return .ignored }
@@ -223,6 +230,7 @@ private struct DetailsPanel: View {
     let session: ReviewSession
     let item: MediaItem
     let onNext: () -> Void
+    let onToggle: () -> Void
     @State private var meta = MediaMetadata()
 
     var body: some View {
@@ -245,7 +253,7 @@ private struct DetailsPanel: View {
             Spacer(minLength: 0)
 
             VStack(spacing: 10) {
-                Button { store.toggleMark(item) } label: {
+                Button(action: onToggle) {
                     HStack(spacing: 8) {
                         Image(systemName: "trash")
                         Text(marked ? "Unmark" : "Mark to Bin")
@@ -286,7 +294,7 @@ private struct DetailsPanel: View {
                 .buttonStyle(.plain)
             }
 
-            Text("← → move · Delete marks or unmarks\nSpace plays or pauses a video")
+            Text("← → move · Delete marks or unmarks, then moves on\nSpace plays or pauses a video")
                 .font(.system(size: 11))
                 .lineSpacing(4)
                 .foregroundStyle(Color(hex: 0x8E8E93))
